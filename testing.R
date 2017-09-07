@@ -5,3 +5,6 @@
 library("rstantools")
 getwd()
 rstan_package_skeleton("momoStan",code_files=list.files("R/",full=TRUE),stan_files=list.files(patt="*.stan"))
+###
+library("devtools")
+document()
