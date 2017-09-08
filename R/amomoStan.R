@@ -57,8 +57,9 @@ amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",po
     ## print(system.time(fit <- try(rstan::sampling(stanmodels$amomo, data=standata,iter=1000, chains=4,verbose=TRUE))))
     ## a kludge
     print(system.time(fit <- try(rstan::stan(model_code=stanmodels$amomo@model_code,
-                                             data=standata,iter=1000, chains=4,verbose=TRUE))))
+                                             data=standata,iter=1000, chains=4,verbose=FALSE))))
     ## cleanup
+    ## Reorganize the predictions so that you can compare with date
     ## MISSING
     ## Done
     return(list(data=data,standata=standata,fit=fit,OK=OK,date=date,ndate=ndate))
