@@ -53,3 +53,9 @@ momoTrend<-function(date,origin=NULL) {
     if(is.null(origin)) origin<-(dmax+dmin)/2
     as.numeric(date-origin)/(dmax-dmin)
 }
+#' Replace missing values with zeroes
+#'
+#' @param a variable to be transformed
+#' @param b value that used to replace missing values, defaults 0. Recycled
+#' @return transformed variable
+na.0<-function(a,b=0) ifelse(is.na(a),b,a)
