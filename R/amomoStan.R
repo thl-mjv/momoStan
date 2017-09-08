@@ -1,7 +1,7 @@
 #' A bayesian version of the A-MOMO algorithm
 #'
 #' Fits a Serfling -type model to a mortality time series by omiting summer and winter seasons from the estimation, and making predictions for the whole time span of the data. This version does not include delay adjustments
-#' 
+#'
 #' @param data a data frame with all necessary variables
 #' @param spring numbers of the weeks defining Spring
 #' @param autumn numbers of the weeks defining Autumn
@@ -52,16 +52,20 @@ amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",po
     standata$P<-ncol(X)
     ## Run the jewels
     require("rstan")
-    print(names(stanmodels))
-    print(system.time(fit <- try(rstan::sampling(stanmodels$amomo, data=standata,iter=1000, chains=4,verbose=TRUE))))
+    ##print(names(stanmodels))
+    ## eventually we will use this:
+    ## print(system.time(fit <- try(rstan::sampling(stanmodels$amomo, data=standata,iter=1000, chains=4,verbose=TRUE))))
+    ## a kludge
+    print(system.time(fit <- try(rstan::stan(model_code=stanmodels$amomo@model_code,
+                                             data=standata,iter=1000, chains=4,verbose=TRUE))))
     ## cleanup
     ## MISSING
     ## Done
     return(list(data=data,standata=standata,fit=fit,OK=OK,date=date,ndate=ndate))
 }
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
