@@ -25,14 +25,23 @@ ggplot(fimomodata,aes(y=n/pop,x=InfA,group=age,colour=age))+geom_point()+facet_w
 source("R/stanmodels.R")
 source("R/utils.R")
 source("R/amomoStan.R")
-loadModule("src/momoStan.so")
-tmp<-amomoStan(fimomodata,byvar="age",popvar="pop")
-tmp$fit2<-stan(file="exec/amomo.stan",data=tmp$standata)
-tmp$fit3<-stan(model_code = stanmodels$amomo@model_code,data=tmp$standata)
-str(tmp)
-table(tmp$OK)
+#loadModule("src/momoStan.so")
+tmp<-amomoStan(fimomodata,byvar="age",popvar="pop",penalties=c(1,1,1))
 tmp$standata$pop
-print(tmp$fit2,pars="alpha")
+print(tmp$fit,pars="shrinkage")
+traceplot(tmp$fit,pars="shrinkage")
+traceplot(tmp$fit,pars="alpha_param")
+traceplot(tmp$fit,pars="alpha_group")
+traceplot(tmp$fit,pars="alpha_real")
+
+(foomatch<-with(tmp,match(date,ndate)))
+(foo<-aperm(apply(extract(tmp$fit,pars="y_pred")[[1]],3:2,quantile,c(.5,0.25,.975)),c(3,1,2))[foomatch,,])
+dim(foo)
+par(mfcol=c(2,3))
+for(i in 1:6) matplot(foo[,,i],type="l")
+
+with(tmp,plot(date,ndate))
+with(tmp$data,plot(date,n,type="l"))
 
 tmp$fit3<-sampling(stanmodels$amomo,tmp$standata,verbose=TRUE)
 stanmodels$amomo@mk_cppmodule(stanmodels$amomo) # but why?

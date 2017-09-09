@@ -9,9 +9,10 @@
 #' @param mortvar name of the variable containing the number of deaths
 #' @param popvar (optionally) the name of the variable containing the population denominator
 #' @param byvar (optionally) the name of the variable by which groups the analysis is done
+#' @param penalties control the shrinkage between
 #' @return stan fit object
 #' @export
-amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",popvar=NA,byvar=NA) {
+amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",popvar=NA,byvar=NA,penalties=NULL) {
     ## Check the parameter
     if(!datevar%in%names(data)) stop("datevar not found")
     if(!mortvar%in%names(data)) stop("mortvar not found")
@@ -39,6 +40,9 @@ amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",po
     X<-cbind(1,momoTrend(date),momoSin(date)) # only one harmonic
     ## create new index to transform the data back to original order
     ndate<-c(date[OK==1],date[OK!=1])
+    ## Penalties
+    if(is.null(penalties)) penalties<-c(0.0,0.0,1.0)
+    penalties<-pmax(penalties,0.00001)
     ## Create the data object for Stan
     standata<-list()
     ## Fit data
@@ -50,6 +54,7 @@ amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",po
     standata$NP<-sum(OK!=1)
     standata$NT<-nrow(pop)
     standata$P<-ncol(X)
+    standata$penalty<-penalties
     ## Run the jewels
     require("rstan")
     ##print(names(stanmodels))
@@ -57,7 +62,7 @@ amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",po
     ## print(system.time(fit <- try(rstan::sampling(stanmodels$amomo, data=standata,iter=1000, chains=4,verbose=TRUE))))
     ## a kludge
     print(system.time(fit <- try(rstan::stan(model_code=stanmodels$amomo@model_code,
-                                             data=standata,iter=1000, chains=4,verbose=FALSE))))
+                                             data=standata,iter=2000, chains=4,verbose=FALSE))))
     ## cleanup
     ## Reorganize the predictions so that you can compare with date
     ## MISSING
