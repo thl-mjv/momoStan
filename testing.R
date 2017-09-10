@@ -33,13 +33,16 @@ traceplot(tmp$fit,pars="shrinkage")
 traceplot(tmp$fit,pars="alpha_param")
 traceplot(tmp$fit,pars="alpha_group")
 traceplot(tmp$fit,pars="alpha_real")
+traceplot(tmp$fit,pars="alpha_eps")
 
 (foomatch<-with(tmp,match(date,ndate)))
-(foo<-aperm(apply(extract(tmp$fit,pars="y_pred")[[1]],3:2,quantile,c(.5,0.25,.975)),c(3,1,2))[foomatch,,])
+(foo<-aperm(apply(extract(tmp$fit,pars="y_pred")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2))[foomatch,,])
 dim(foo)
 par(mfcol=c(2,3))
 for(i in 1:6) matplot(foo[,,i],type="l")
-
+par(mfcol=c(1,1))
+with(subset(tmp$data,age=="All"),plot(date,n))
+matlines(tmp$date,foo[,,6])
 with(tmp,plot(date,ndate))
 with(tmp$data,plot(date,n,type="l"))
 
