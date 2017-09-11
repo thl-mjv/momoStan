@@ -3,16 +3,18 @@
 #' Fits a Serfling -type model to a mortality time series by omiting summer and winter seasons from the estimation, and making predictions for the whole time span of the data. This version does not include delay adjustments
 #'
 #' @param data a data frame with all necessary variables
-#' @param spring numbers of the weeks defining Spring
-#' @param autumn numbers of the weeks defining Autumn
+#' @param spring numbers of the weeks defining Spring (use 1:53 to use all weeks)
+#' @param autumn numbers of the weeks defining Autumn (use 1:53 to use all weeks)
 #' @param datevar name of the variable containing the date of the observation (preferrably the date of the Monday)
 #' @param mortvar name of the variable containing the number of deaths
 #' @param popvar (optionally) the name of the variable containing the population denominator
 #' @param byvar (optionally) the name of the variable by which groups the analysis is done
 #' @param penalties control the shrinkage between
+#' @param data.only if TRUE just collect all the data together and don't fit
 #' @return stan fit object
 #' @export
-amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",popvar=NA,byvar=NA,penalties=NULL) {
+amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",popvar=NA,byvar=NA,penalties=NULL,
+                    data.only=FALSE) {
     ## Check the parameter
     if(!datevar%in%names(data)) stop("datevar not found")
     if(!mortvar%in%names(data)) stop("mortvar not found")
@@ -42,7 +44,7 @@ amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",po
     ndate<-c(date[OK==1],date[OK!=1])
     ## Penalties
     if(is.null(penalties)) penalties<-c(0.0,0.0,1.0)
-    penalties<-pmax(penalties,0.00001)
+    ## penalties<-pmax(penalties,0.00001)
     ## Create the data object for Stan
     standata<-list()
     ## Fit data
@@ -56,22 +58,23 @@ amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",po
     standata$P<-ncol(X)
     standata$penalty<-penalties
     ## Run the jewels
-    require("rstan")
-    ##print(names(stanmodels))
-    ## eventually we will use this:
-    ## print(system.time(fit <- try(rstan::sampling(stanmodels$amomo, data=standata,iter=1000, chains=4,verbose=TRUE))))
-    ## a kludge
-    print(system.time(fit <- try(rstan::stan(model_code=stanmodels$amomo@model_code,
-                                             data=standata,iter=2000, chains=4,verbose=FALSE))))
+    if(!data.only) {
+        require("rstan")
+        ##print(names(stanmodels))
+        ## eventually we will use this:
+        ## print(system.time(fit <- try(rstan::sampling(stanmodels$amomo, data=standata,iter=1000, chains=4,verbose=TRUE))))
+        ## a kludge
+        print(system.time(fit <- try(rstan::stan(model_code=stanmodels$amomo@model_code,
+                                                 data=standata,iter=2000, chains=4,verbose=FALSE))))
+    } else {
+        fit<-NULL
+    }
     ## cleanup
     ## Reorganize the predictions so that you can compare with date
     ## MISSING
     ## Done
-    return(list(data=data,standata=standata,fit=fit,OK=OK,date=date,ndate=ndate))
+    return(list(data=data,standata=standata,fit=fit,OK=OK,date=date,ndate=ndate,
+                vars=list(datevar=datevar,mortvar=mortvar,popvar=popvar,byvar=byvar)))
 }
-
-
-
-
 
 

@@ -5,14 +5,15 @@
 \title{A bayesian version of the A-MOMO algorithm}
 \usage{
 amomoStan(data, spring = 16:25, autumn = 31:47, datevar = "date",
-  mortvar = "n", popvar = NA, byvar = NA)
+  mortvar = "n", popvar = NA, byvar = NA, penalties = NULL,
+  data.only = FALSE)
 }
 \arguments{
 \item{data}{a data frame with all necessary variables}
 
-\item{spring}{numbers of the weeks defining Spring}
+\item{spring}{numbers of the weeks defining Spring (use 1:53 to use all weeks)}
 
-\item{autumn}{numbers of the weeks defining Autumn}
+\item{autumn}{numbers of the weeks defining Autumn (use 1:53 to use all weeks)}
 
 \item{datevar}{name of the variable containing the date of the observation (preferrably the date of the Monday)}
 
@@ -21,6 +22,10 @@ amomoStan(data, spring = 16:25, autumn = 31:47, datevar = "date",
 \item{popvar}{(optionally) the name of the variable containing the population denominator}
 
 \item{byvar}{(optionally) the name of the variable by which groups the analysis is done}
+
+\item{penalties}{control the shrinkage between}
+
+\item{data.only}{if TRUE just collect all the data together and don't fit}
 }
 \value{
 stan fit object
