@@ -67,10 +67,11 @@ fimomodata$TEMP.colder<-with(fimomodata,-pmin(TEMP,TEMP.pred)+TEMP.pred)
 with(subset(fimomodata,age=="All"),matplot(date,cbind(TEMP,TEMP.pred,TEMP.hot,TEMP.cold,TEMP.colder,TEMP.hotter),type="l"))
 
 
-ftmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",penalties=c(0,0,1),covar=c("TEMP.hot","TEMP.hotter","TEMP.cold","TEMP.colder"),seasvar="InfA",data.only=TRUE)
+ftmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",penalties=c(0,0,1),covar=NULL,
+                  seasvar=c("TEMP.hot","TEMP.hotter","TEMP.cold","TEMP.colder","InfA"),data.only=FALSE)
 ftmp$fit2<-stan(model_code=stanmodels$flumomo@model_code,data=ftmp$standata)
 
-print(ftmp$fit2,pars="alpha_covariates")
+print(ftmp$fit,pars="alpha_covariates")
 traceplot(ftmp$fit2,pars="alpha_covariates")
 
 dim(bfoo<-aperm(apply(extract(ftmp$fit2,pars="pred_full")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
@@ -111,5 +112,5 @@ matplot(b6+10*col(b6),type="l",lty=1,col=1)
 matplot(t(apply(b6,1,cumsum)),type="l",lty=1,col=1)
 lines(b1[,5]-b2[,5],col="red")
 dimnames(ftmp$standata$z)[[3]]
-stan_dens(ftmp$fit,pars=paste0("alpha_covariates[",1:12,",1]"))
+stan_dens(ftmp$fit,pars=paste0("alpha_covariates[",1:35,",1]"))
 matplot(c4<-apply(extract(ftmp$fit,pars="alpha_covariates")[[1]][,,5],2,sort),type="l")
