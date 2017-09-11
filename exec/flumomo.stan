@@ -36,8 +36,8 @@ model {
     alpha_baseline     [,m] ~ normal(0.0,1.0);
     alpha_baseline_null[,m] ~ normal(0.0,1.0);
     alpha_covariates   [,m] ~ normal(0.0,1.0);
-    y    [,m] ~ poisson_log(baseline[1:N ,m]+covariate_effects[1:N,m]); 
-    yy   [,m] ~ poisson_log(baseline[1:N ,m]); 
+    y    [,m] ~ poisson_log(baseline     [1:N ,m]+covariate_effects[1:N,m]); 
+    yy   [,m] ~ poisson_log(baseline_null[1:N ,m]); 
   }
 }
 generated quantities {

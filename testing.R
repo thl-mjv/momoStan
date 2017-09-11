@@ -57,18 +57,56 @@ rstan:::grab_cxxfun(stanmodels$amomo@dso)
 str(stanmodels$flumomo@model_code)
 table(momoSeason(fimomodata$date))
 
-ftmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",penalties=c(0,0,1),covar=c("TEMP"),seasvar="InfA",data.only=TRUE)
+tmp.pred<-predict(lm(TEMP~momoSin(date,3),data=fimomodata))
+fimomodata$TEMP.pred<-tmp.pred
+fimomodata$TEMP.hot <-with(fimomodata,pmax(TEMP,max(TEMP.pred))-max(TEMP.pred))
+fimomodata$TEMP.cold<-with(fimomodata,min(TEMP.pred)-pmin(TEMP,min(TEMP.pred)))
+fimomodata$TEMP.hotter<-with(fimomodata,+pmax(TEMP,TEMP.pred)-TEMP.pred)
+fimomodata$TEMP.colder<-with(fimomodata,-pmin(TEMP,TEMP.pred)+TEMP.pred)
+
+with(subset(fimomodata,age=="All"),matplot(date,cbind(TEMP,TEMP.pred,TEMP.hot,TEMP.cold,TEMP.colder,TEMP.hotter),type="l"))
+
+
+ftmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",penalties=c(0,0,1),covar=c("TEMP.hot","TEMP.hotter","TEMP.cold","TEMP.colder"),seasvar="InfA",data.only=TRUE)
 ftmp$fit2<-stan(model_code=stanmodels$flumomo@model_code,data=ftmp$standata)
 
 print(ftmp$fit2,pars="alpha_covariates")
 traceplot(ftmp$fit2,pars="alpha_covariates")
 
+(bfoo<-aperm(apply(extract(ftmp$fit,pars="pred_full")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
+(nfoo<-aperm(apply(extract(ftmp$fit,pars="pred_baseline_null")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
 (ffoo<-aperm(apply(extract(ftmp$fit,pars="pred_baseline")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
 dim(ffoo)
 par(mfcol=c(2,3))
 for(i in 1:6) {
-    matplot(ffoo[,,i],type="l")
+    with(ftmp,plot(date,standata$y[,i]))
+#    matlines(ftmp$date,bfoo[,,i],type="l",col=4,lty=c(1,2,2),lwd=4)
+    matlines(ftmp$date,nfoo[,,i],type="l",col=3,lty=c(1,2,2),lwd=3)
+#    matlines(ftmp$date,ffoo[,,i],type="l",col=2,lty=c(1,2,2),lwd=2)
+#    matlines(ftmp$date, foo[,,i],type="l",col=1,lty=c(1,2,2),lwd=1)
 }
 
 ftmp$standata$z
 traceback()
+
+head(b1<-apply(extract(ftmp$fit,pars="pred_full")[[1]],2:3,mean))
+head(b2<-apply(extract(ftmp$fit,pars="pred_baseline")[[1]],2:3,mean))
+head(b3<-apply(extract(ftmp$fit,pars="pred_baseline_null")[[1]],2:3,mean))
+dim(b4<-apply(extract(ftmp$fit,pars="pred_effects")[[1]],2:4,mean))
+head(b5<-apply(extract( tmp$fit,pars="y_pred")[[1]],2:3,mean)[foomatch,])
+
+par(mfcol=c(1,1))
+matplot(cbind(b1[,5],b2[,5],b3[,5],b5[,6]),type="l",lwd=3,lty=1)
+matplot(b1,type="l")
+matlines(b2,type="l")
+matlines(b3,type="l")
+matlines(b5,type="l")
+
+b6<-with(extract(ftmp$fit,pars=c("pred_effects","pred_baseline","pred_full")), {
+    print(dim(pred_effects))
+    apply(pred_effects[,,5,]-pred_baseline[,,rep(5,12)],2:3,mean)
+})
+matplot(b6+10*col(b6),type="l",lty=1,col=1)
+
+matplot(t(apply(b6,1,cumsum)),type="l",lty=1,col=1)
+lines(b1[,5]-b2[,5],col="red")
