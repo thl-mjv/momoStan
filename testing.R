@@ -28,7 +28,7 @@ source("R/amomoStan.R")
 source("R/flumomoStan.R")
 #loadModule("src/momoStan.so")
 tmp<-amomoStan(fimomodata,byvar="age",popvar="pop",penalties=c(0,0,1))
-tmp$standata$pop
+
 print(tmp$fit,pars="shrinkage")
 traceplot(tmp$fit,pars="shrinkage")
 traceplot(tmp$fit,pars="alpha_param")
@@ -73,26 +73,26 @@ ftmp$fit2<-stan(model_code=stanmodels$flumomo@model_code,data=ftmp$standata)
 print(ftmp$fit2,pars="alpha_covariates")
 traceplot(ftmp$fit2,pars="alpha_covariates")
 
-(bfoo<-aperm(apply(extract(ftmp$fit,pars="pred_full")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
-(nfoo<-aperm(apply(extract(ftmp$fit,pars="pred_baseline_null")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
-(ffoo<-aperm(apply(extract(ftmp$fit,pars="pred_baseline")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
+dim(bfoo<-aperm(apply(extract(ftmp$fit2,pars="pred_full")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
+dim(nfoo<-aperm(apply(extract(ftmp$fit2,pars="pred_baseline_null")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
+dim(ffoo<-aperm(apply(extract(ftmp$fit2,pars="pred_baseline")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
 dim(ffoo)
 par(mfcol=c(2,3))
-for(i in 1:6) {
-    with(ftmp,plot(date,standata$y[,i]))
-#    matlines(ftmp$date,bfoo[,,i],type="l",col=4,lty=c(1,2,2),lwd=4)
+for(i in 1:5) {
+    with(ftmp,plot(date,standata$y[,i],main=i,type="l"))
+    matlines(ftmp$date,bfoo[,,i],type="l",col=4,lty=c(1,2,2),lwd=4)
     matlines(ftmp$date,nfoo[,,i],type="l",col=3,lty=c(1,2,2),lwd=3)
-#    matlines(ftmp$date,ffoo[,,i],type="l",col=2,lty=c(1,2,2),lwd=2)
-#    matlines(ftmp$date, foo[,,i],type="l",col=1,lty=c(1,2,2),lwd=1)
+    matlines(ftmp$date,ffoo[,,i],type="l",col=2,lty=c(1,2,2),lwd=2)
+    matlines(ftmp$date, foo[,,i],type="l",col=1,lty=c(1,2,2),lwd=1)
 }
 
 ftmp$standata$z
 traceback()
 
-head(b1<-apply(extract(ftmp$fit,pars="pred_full")[[1]],2:3,mean))
-head(b2<-apply(extract(ftmp$fit,pars="pred_baseline")[[1]],2:3,mean))
-head(b3<-apply(extract(ftmp$fit,pars="pred_baseline_null")[[1]],2:3,mean))
-dim(b4<-apply(extract(ftmp$fit,pars="pred_effects")[[1]],2:4,mean))
+head(b1<-apply(extract(ftmp$fit2,pars="pred_full")[[1]],2:3,mean))
+head(b2<-apply(extract(ftmp$fit2,pars="pred_baseline")[[1]],2:3,mean))
+head(b3<-apply(extract(ftmp$fit2,pars="pred_baseline_null")[[1]],2:3,mean))
+dim(b4<-apply(extract(ftmp$fit2,pars="pred_effects")[[1]],2:4,mean))
 head(b5<-apply(extract( tmp$fit,pars="y_pred")[[1]],2:3,mean)[foomatch,])
 
 par(mfcol=c(1,1))
@@ -110,3 +110,6 @@ matplot(b6+10*col(b6),type="l",lty=1,col=1)
 
 matplot(t(apply(b6,1,cumsum)),type="l",lty=1,col=1)
 lines(b1[,5]-b2[,5],col="red")
+dimnames(ftmp$standata$z)[[3]]
+stan_dens(ftmp$fit,pars=paste0("alpha_covariates[",1:12,",1]"))
+matplot(c4<-apply(extract(ftmp$fit,pars="alpha_covariates")[[1]][,,5],2,sort),type="l")

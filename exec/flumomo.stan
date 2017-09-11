@@ -17,7 +17,7 @@ transformed data {
 parameters {
   matrix[P,M] alpha_baseline;
   matrix[P,M] alpha_baseline_null;  
-  matrix<lower=0>[Q,M] alpha_covariates; 
+  matrix<lower=0>[Q,M] alpha_covariates;
 }
 transformed parameters {
   matrix<lower=-10,upper=10>[N,M] baseline;
@@ -28,8 +28,7 @@ transformed parameters {
     baseline         [,m] = x * alpha_baseline     [,m]+pop[,m];
     baseline_null    [,m] = x * alpha_baseline_null[,m]+pop[,m];
     covariate_effects[,m] = to_matrix(z[,m,])*alpha_covariates[,m];
-  }
-  
+  }  
 }
 model {
   for(m in 1:M) {
