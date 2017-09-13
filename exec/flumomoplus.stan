@@ -17,7 +17,7 @@ transformed data {
 parameters {
   matrix[P,M] alpha_baseline;
   matrix[P,M] alpha_baseline_null;  
-  matrix<lower=0>[Q,M] alpha_covariates;
+  matrix[Q,M] alpha_covariates; // no constraints
 }
 transformed parameters {
   matrix<lower=-10,upper=10>[N,M] baseline;
