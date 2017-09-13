@@ -67,7 +67,8 @@ flumomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",
         fit<-NULL
     }
     res$fit<-fit
-    res$vars<-c(res$vars,covar=covar,seasvar=seasvar)
+    res$vars<-c(res$vars,list(covar=covar,seasvar=seasvar))
+    cat("Done\n")
     res
 }
 
