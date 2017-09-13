@@ -59,15 +59,37 @@ table(momoSeason(fimomodata$date))
 
 tmp.pred<-predict(lm(TEMP~momoSin(date,3),data=fimomodata))
 fimomodata$TEMP.pred<-tmp.pred
-fimomodata$TEMP.hot <-with(fimomodata,pmax(TEMP,max(TEMP.pred))-max(TEMP.pred))
-fimomodata$TEMP.cold<-with(fimomodata,min(TEMP.pred)-pmin(TEMP,min(TEMP.pred)))
-fimomodata$TEMP.hotter<-with(fimomodata,+pmax(TEMP,TEMP.pred)-TEMP.pred)
+fimomodata$TEMP.hotter<-with(fimomodata,pmax(TEMP,TEMP.pred)-TEMP.pred) # above prediction
+fimomodata$TEMP.hot   <-with(fimomodata,pmax(TEMP,max(TEMP.pred))-max(TEMP.pred)) # above hot
+fimomodata$TEMP.hot2  <-with(fimomodata,ifelse(TEMP>max(TEMP.pred),max(TEMP.pred),
+                                        ifelse(TEMP<mean(TEMP.pred),mean(TEMP.pred),pmax(TEMP.pred,TEMP)))-
+                                        pmax(TEMP.pred,mean(TEMP.pred)))
+fimomodata$TEMP.hot3  <-with(fimomodata,ifelse(TEMP>mean(TEMP.pred),mean(TEMP.pred),pmax(TEMP.pred,TEMP))-pmin(TEMP.pred,mean(TEMP.pred)))
 fimomodata$TEMP.colder<-with(fimomodata,-pmin(TEMP,TEMP.pred)+TEMP.pred)
+fimomodata$TEMP.cold  <-with(fimomodata,min(TEMP.pred)-pmin(TEMP,min(TEMP.pred)))
+fimomodata$TEMP.cold2 <-with(fimomodata,-ifelse(TEMP<min(TEMP.pred),min(TEMP.pred),
+                                        ifelse(TEMP>mean(TEMP.pred),mean(TEMP.pred),pmin(TEMP.pred,TEMP)))+
+                                        pmin(TEMP.pred,mean(TEMP.pred)))
+fimomodata$TEMP.cold3 <-with(fimomodata,-ifelse(TEMP<mean(TEMP.pred),mean(TEMP.pred),pmin(TEMP.pred,TEMP))+pmax(TEMP.pred,mean(TEMP.pred)))
 
-with(subset(fimomodata,age=="All"),matplot(date,cbind(TEMP,TEMP.pred,TEMP.hot,TEMP.cold,TEMP.colder,TEMP.hotter),type="l"))
+
+par(mfcol=c(2,1))
+with(subset(fimomodata,age=="All"),matplot(date,cbind(TEMP,TEMP.pred,mean(TEMP.pred),max(TEMP.pred),
+                                                      TEMP.hot+max(TEMP.pred),
+                                                      TEMP.hot2+pmax(TEMP.pred,mean(TEMP.pred)),
+                                                      TEMP.hot3+TEMP.pred),type="l",
+                                           lty=c(1,1,3,3,2,2,2),col=c(1,2,1,1,1,2,3),lwd=c(2,2,1,1,4,4,4)))
+with(subset(fimomodata,age=="All"),matplot(date,cbind(TEMP,TEMP.pred,mean(TEMP.pred),max(TEMP.pred),
+                                                      -TEMP.cold+min(TEMP.pred),
+                                                      -TEMP.cold2+pmin(TEMP.pred,mean(TEMP.pred)),
+                                                      -TEMP.cold3+TEMP.pred),type="l",
+                                           lty=c(1,1,3,3,2,2,2),col=c(1,2,1,1,1,2,3),lwd=c(2,2,1,1,4,4,4)))
+
+with(subset(fimomodata,age=="All"),cbind(TEMP,TEMP.pred,mean(TEMP.pred),max(TEMP.pred),TEMP.hot,TEMP.hot2,TEMP.hot3,-TEMP.hotter+TEMP.hot+TEMP.hot2+TEMP.hot3))
 
 
-ftmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",penalties=c(0,0,1),covar=c("TEMP.hot","TEMP.hotter","TEMP.cold","TEMP.colder"),seasvar="InfA",data.only=TRUE)
+
+ftmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",penalties=c(0,0,1),covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),seasvar="InfA",data.only=FALSE)
 ftmp$fit2<-stan(model_code=stanmodels$flumomo@model_code,data=ftmp$standata)
 
 print(ftmp$fit2,pars="alpha_covariates")
