@@ -71,5 +71,5 @@ flumomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",
     res
 }
 
-        
-        
+
+
