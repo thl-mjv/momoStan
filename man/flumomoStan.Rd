@@ -6,7 +6,8 @@
 \usage{
 flumomoStan(data, spring = 16:25, autumn = 31:47, datevar = "date",
   mortvar = "n", covar = NULL, seasvar = NULL, popvar = NA,
-  byvar = NA, penalties = NULL, data.only = FALSE)
+  byvar = NA, iter = 2000, positive = c("all", "none", "some"),
+  positives = NULL, data.only = FALSE)
 }
 \arguments{
 \item{data}{a data frame with all necessary variables}
@@ -23,7 +24,11 @@ flumomoStan(data, spring = 16:25, autumn = 31:47, datevar = "date",
 
 \item{byvar}{(optionally) the name of the variable by which groups the analysis is done}
 
-\item{penalties}{control the shrinkage between}
+\item{iter}{number of iterations}
+
+\item{positive}{which covariates should be restricted to positives, either all, none or some}
+
+\item{positives}{if positive=="some", which. Treated as list of regular expressions, anything that matches is treated as a hit}
 
 \item{data.only}{if TRUE just collect all the data together and don't fit}
 }

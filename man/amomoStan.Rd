@@ -5,8 +5,8 @@
 \title{A bayesian version of the A-MOMO algorithm}
 \usage{
 amomoStan(data, spring = 16:25, autumn = 31:47, datevar = "date",
-  mortvar = "n", popvar = NA, byvar = NA, penalties = NULL,
-  data.only = FALSE)
+  mortvar = "n", popvar = NA, byvar = NA, iter = 2000,
+  penalties = NULL, data.only = FALSE)
 }
 \arguments{
 \item{data}{a data frame with all necessary variables}
@@ -22,6 +22,8 @@ amomoStan(data, spring = 16:25, autumn = 31:47, datevar = "date",
 \item{popvar}{(optionally) the name of the variable containing the population denominator}
 
 \item{byvar}{(optionally) the name of the variable by which groups the analysis is done}
+
+\item{iter}{number of iterations}
 
 \item{penalties}{control the shrinkage between}
 

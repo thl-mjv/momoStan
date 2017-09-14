@@ -98,11 +98,15 @@ source("R/stanmodels.R")
 source("R/utils.R")
 source("R/amomoStan.R")
 source("R/flumomoStan.R")
-ftmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
-                  seasvar="InfA",data.only=FALSE)
 ptmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
-                  seasvar="InfA",data.only=FALSE,positive=FALSE)
-str(ftmp)
+                  seasvar="InfA",data.only=FALSE,positive="all" ,iter=4000) # 560s
+ftmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
+                  seasvar="InfA",data.only=FALSE,positive="none",iter=4000) #351s 615
+mtmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
+                  seasvar="InfA",data.only=FALSE,positive="some",iter=4000,positives="InfA") # 1193
+Mtmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
+                  seasvar="InfA",data.only=FALSE,positive="some",iter=4000,positives="TEMP")
+system.time(save(ptmp,ftmp,mtmp,Mtmp,file="tmp.rda")) #464s
 if(inherts(ftmp$fit,"try-error"))
     ftmp$fit<-stan(model_code=stanmodels$flumomo@model_code,data=ftmp$standata)
 
@@ -145,7 +149,9 @@ stan_dens(ftmp$fit,pars=paste0("alpha_covariates[",1:13,",5]"))
 traceplot(ftmp$fit,pars=paste0("alpha_covariates[",1:14,",5]"))
 pairs(ftmp$fit,pars=paste0("alpha_covariates[",1:14,",5]"))
 pairs(ptmp$fit,pars=paste0("alpha_covariates[",1:13,",5]"))
+pairs(ptmp$fit,pars=paste0("alpha_baseline[",1:4,",5]"))
 pairs(ftmp$fit,pars=paste0("alpha_baseline[",1:4,",5]"))
+pairs(mtmp$fit,pars=paste0("alpha_baseline[",1:4,",5]"))
 matplot(c4<-apply(extract(ftmp$fit,pars="alpha_covariates")[[1]][,,5],2,sort),type="l")
 
 addcol<-function(a,b=1) a+b*col(a)
@@ -171,3 +177,27 @@ matplot(t(apply(b4*(-1+exp(d4[, 1:6]%*%z4[ 1:6,])),2,quantile,c(.5,.025,.975))),
 matplot(t(apply(b4*(-1+exp(d4[,7:13]%*%z4[7:13,])),2,quantile,c(.5,.025,.975))),type="l")
 
 matplot(cbind(apply(a4*(exp(c4%*%z4))-e4,2,mean),apply(b4*(exp(d4%*%z4))-f4,2,mean)),type="l",lty=1)
+totplus<-cbind(t(apply(apply(a4*(-1+exp(c4[, 1:6]%*%z4[ 1:6,])),1,tapply,momoSeason(ftmp$date),sum),1,quantile,c(0.5,0.025,0.975))),
+               t(apply(apply(a4*(-1+exp(c4[,7:13]%*%z4[7:13,])),1,tapply,momoSeason(ftmp$date),sum),1,quantile,c(0.5,0.025,0.975))))
+totfree<-cbind(t(apply(apply(b4*(-1+exp(d4[, 1:6]%*%z4[ 1:6,])),1,tapply,momoSeason(ftmp$date),sum),1,quantile,c(0.5,0.025,0.975))),
+               t(apply(apply(b4*(-1+exp(d4[,7:13]%*%z4[7:13,])),1,tapply,momoSeason(ftmp$date),sum),1,quantile,c(0.5,0.025,0.975))))
+system.time(feff<-momoEffects(ftmp,temp=1:6,infl=7:13)) # 20s
+system.time(peff<-momoEffects(ptmp,temp=1:6,infl=7:13)) # 21
+system.time(meff<-momoEffects(mtmp,temp=1:6,infl=7:13)) # 10s
+system.time(Meff<-momoEffects(Mtmp,temp=1:6,infl=7:13)) # 10s
+
+par(mfcol=c(1,2))
+matplot (2010:2017,t(feff$temptotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=1,ylim=c(-1000,2000))
+matlines(2010:2017,t(peff$temptotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=2)
+matlines(2010:2017,t(meff$temptotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=3)
+matlines(2010:2017,t(Meff$temptotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=4)
+abline(h=0)
+matplot (2010:2017,t(feff$infltotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=1,ylim=c(-1000,2000))
+matlines(2010:2017,t(peff$infltotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=2)
+matlines(2010:2017,t(meff$infltotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=3)
+matlines(2010:2017,t(Meff$infltotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=4)
+abline(h=0)
+
+
+
+meff$temptotal

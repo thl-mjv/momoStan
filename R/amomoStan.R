@@ -9,11 +9,12 @@
 #' @param mortvar name of the variable containing the number of deaths
 #' @param popvar (optionally) the name of the variable containing the population denominator
 #' @param byvar (optionally) the name of the variable by which groups the analysis is done
+#' @param iter number of iterations
 #' @param penalties control the shrinkage between
 #' @param data.only if TRUE just collect all the data together and don't fit
 #' @return stan fit object
 #' @export
-amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",popvar=NA,byvar=NA,penalties=NULL,
+amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",popvar=NA,byvar=NA,iter=2000,penalties=NULL,
                     data.only=FALSE) {
     ## Check the parameter
     if(!datevar%in%names(data)) stop("datevar not found")
@@ -65,7 +66,7 @@ amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",po
         ## print(system.time(fit <- try(rstan::sampling(stanmodels$amomo, data=standata,iter=1000, chains=4,verbose=TRUE))))
         ## a kludge
         print(system.time(fit <- try(rstan::stan(model_code=stanmodels$amomo@model_code,
-                                                 data=standata,iter=2000, chains=4,verbose=FALSE))))
+                                                 data=standata,iter=iter, chains=4,verbose=FALSE))))
     } else {
         fit<-NULL
     }

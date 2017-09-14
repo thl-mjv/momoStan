@@ -9,13 +9,16 @@
 #' @param seasvar character vector of covariates included in the model by season
 #' @param popvar (optionally) the name of the variable containing the population denominator
 #' @param byvar (optionally) the name of the variable by which groups the analysis is done
-#' @param positive if TRUE restrict model to positive
+#' @param iter number of iterations
+#' @param positive which covariates should be restricted to positives, either all, none or some
+#' @param positives if positive=="some", which. Treated as list of regular expressions, anything that matches is treated as a hit
 #' @param data.only if TRUE just collect all the data together and don't fit
 #' @return stan fit object
 #' @export
 flumomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",
                       covar=NULL,seasvar=NULL,
-                      popvar=NA,byvar=NA,positive=TRUE,
+                      popvar=NA,byvar=NA,iter=2000,
+                      positive=c("all","none","some"),positives=NULL,
                       data.only=FALSE) {
     res<-amomoStan(data,spring=1:53,autumn=1:53,datevar=datevar,mortvar=mortvar,
                    popvar=popvar,byvar=byvar,penalties=c(0,0,1),
@@ -66,18 +69,64 @@ flumomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",
     ## Run the jewels
     if(!data.only) {
         require("rstan")
-        if(positive) model<-stanmodels$flumomo else model<-stanmodels$flumomoplus
+        positive<-match.arg(positive)
+        if(positive=="some") {
+            cat("Positives=some:")
+            model<-stanmodels$flumomominus
+            npos<-0
+            if(length(positives)>0) {
+                posZ<-apply(sapply(positives,function(a) grepl(a,covar)),1,any)
+                npos<-sum(posZ)
+                cat(npos,"/",sum(!posZ)," of ",length(posZ),"...",sep="")
+            }
+            if(npos==0) {
+                cat(" No covariate set as positive!")
+                positive<-"none"
+            } else {
+                if(npos==length(covar)) {
+                    cat(" All covariates set as positive!")
+                    positive<-"all"
+                } else {
+                    cat(npos,"covariates set as positive!")
+                    Zplus<-res$standata$z[,, posZ,drop=FALSE]
+                    Zfree<-res$standata$z[,,!posZ,drop=FALSE]
+                    res$standata$z<-NULL
+                    res$standata$zp<-Zplus
+                    res$standata$zf<-Zfree
+                    res$standata$Qp<-sum( posZ)
+                    res$standata$Qf<-sum(!posZ)
+                    cat(dim(Zplus),dim(Zfree))
+                    positives<-covar[posZ]
+                    freepars<-covar[!posZ]
+                }
+            }
+        }
+        if(positive=="all" ) {
+            model<-stanmodels$flumomo
+            positives<-covar
+            freepars<-NULL
+        }
+        if(positive=="none") {
+            model<-stanmodels$flumomoplus
+            positives<-NULL
+            freepars<-covar
+        }
         ##print(names(stanmodels))
         ## eventually we will use this:
-        ## print(system.time(fit <- try(rstan::sampling(stanmodels$amomo, data=standata,iter=1000, chains=4,verbose=TRUE))))
+        print(system.time(fit <- try(rstan::sampling(stanmodels$amomo, data=res$standata,
+                                                     iter=iter, chains=4,verbose=TRUE))))
         ## a kludge
-        print(system.time(fit <- try(rstan::stan(model_code=model@model_code,
-                                                 data=res$standata,iter=2000, chains=4,verbose=FALSE))))
+        if(inherits(fit,"try-error")) {
+            cat("Recalculating\n")
+            print(system.time(fit <- try(rstan::stan(model_code=model@model_code,
+                                                     data=res$standata,iter=iter, chains=4,verbose=FALSE))))
+        }
     } else {
         fit<-NULL
     }
     res$fit<-fit
     res$vars<-c(res$vars,list(covar=covar,seasvar=seasvar))
+    res$positives<-list(positives=positives,free=freepars)
     cat("Done\n")
     res
 }

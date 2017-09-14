@@ -3,6 +3,7 @@
 export(amomoStan)
 export(flumomoStan)
 export(momoCalendar)
+export(momoEffects)
 export(momoMonday)
 export(momoSeason)
 export(momoSin)
