@@ -32,9 +32,9 @@ transformed parameters {
 }
 model {
   for(m in 1:M) {
-    alpha_baseline     [,m] ~ normal(0.0,1.00);
-    alpha_baseline_null[,m] ~ normal(0.0,1.00);
-    alpha_covariates   [,m] ~ normal(0.0,0.10);
+    alpha_baseline     [,m] ~ double_exponential(0.0,1.00);
+    alpha_baseline_null[,m] ~ double_exponential(0.0,1.00);
+    alpha_covariates   [,m] ~ double_exponential(0.0,0.10);
     y    [,m] ~ poisson_log(baseline     [1:N ,m]+covariate_effects[1:N,m]); 
     yy   [,m] ~ poisson_log(baseline_null[1:N ,m]); 
   }

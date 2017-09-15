@@ -44,7 +44,7 @@ par(mfcol=c(2,3))
 for(i in 1:6) matplot(foo[,,i],type="l")
 par(mfcol=c(1,1))
 with(subset(tmp$data,age=="All"),plot(date,n))
-matlines(tmp$date,foo[,,6])
+matlines(tmp$date,foo[,,5])
 with(tmp,plot(date,ndate))
 with(tmp$data,plot(date,n,type="l"))
 
@@ -99,35 +99,24 @@ source("R/utils.R")
 source("R/amomoStan.R")
 source("R/flumomoStan.R")
 ptmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
-                  seasvar="InfA",data.only=FALSE,positive="all" ,iter=4000) # 560s
+                  seasvar="InfA",data.only=FALSE,positive="all" ,iter=1000) # 560s
 ftmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
-                  seasvar="InfA",data.only=FALSE,positive="none",iter=4000) #351s 615
+                  seasvar="InfA",data.only=FALSE,positive="none",iter=1000) #351s 615
 mtmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
-                  seasvar="InfA",data.only=FALSE,positive="some",iter=4000,positives="InfA") # 1193
+                  seasvar="InfA",data.only=FALSE,positive="some",iter=1000,positives="InfA") # 1193
 Mtmp<-flumomoStan(fimomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
-                  seasvar="InfA",data.only=FALSE,positive="some",iter=4000,positives="TEMP")
+                  seasvar="InfA",data.only=FALSE,positive="some",iter=1000,positives="TEMP") # 1047
 system.time(save(ptmp,ftmp,mtmp,Mtmp,file="tmp.rda")) #464s
 if(inherts(ftmp$fit,"try-error"))
     ftmp$fit<-stan(model_code=stanmodels$flumomo@model_code,data=ftmp$standata)
 
-print(ftmp$fit2,pars="alpha_covariates")
-traceplot(ftmp$fit2,pars="alpha_covariates")
+print(ftmp$fit,pars="alpha_covariates")
+pairs(ptmp$fit,pars="alpha_baseline")
+stan_dens(ptmp$fit,pars="alpha_baseline")
 
-dim(bfoo<-aperm(apply(extract(ftmp$fit,pars="pred_full")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
-dim(nfoo<-aperm(apply(extract(ftmp$fit,pars="pred_baseline_null")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
-dim(ffoo<-aperm(apply(extract(ftmp$fit,pars="pred_baseline")[[1]],3:2,quantile,c(.5,0.025,.975)),c(3,1,2)))
-dim(ffoo)
-par(mfcol=c(2,3))
-for(i in 1:5) {
-    with(ftmp,plot(date,standata$y[,i],main=i,type="l"))
-    matlines(ftmp$date,bfoo[,,i],type="l",col=4,lty=c(1,2,2),lwd=4)
-    matlines(ftmp$date,nfoo[,,i],type="l",col=3,lty=c(1,2,2),lwd=3)
-    matlines(ftmp$date,ffoo[,,i],type="l",col=2,lty=c(1,2,2),lwd=2)
-    matlines(ftmp$date, foo[,,i],type="l",col=1,lty=c(1,2,2),lwd=1)
-}
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
 
-ftmp$standata$z
-traceback()
 
 head(b1<-apply(extract(ftmp$fit,pars="pred_full")[[1]],2:3,mean))
 head(b2<-apply(extract(ftmp$fit,pars="pred_baseline")[[1]],2:3,mean))
@@ -151,7 +140,9 @@ pairs(ftmp$fit,pars=paste0("alpha_covariates[",1:14,",5]"))
 pairs(ptmp$fit,pars=paste0("alpha_covariates[",1:13,",5]"))
 pairs(ptmp$fit,pars=paste0("alpha_baseline[",1:4,",5]"))
 pairs(ftmp$fit,pars=paste0("alpha_baseline[",1:4,",5]"))
+pairs(ptmp$fit,pars=paste0("alpha_baseline[",1:4,",5]"))
 pairs(mtmp$fit,pars=paste0("alpha_baseline[",1:4,",5]"))
+pairs(Mtmp$fit,pars=paste0("alpha_baseline[",1:4,",5]")) # not fit
 matplot(c4<-apply(extract(ftmp$fit,pars="alpha_covariates")[[1]][,,5],2,sort),type="l")
 
 addcol<-function(a,b=1) a+b*col(a)
@@ -181,12 +172,13 @@ totplus<-cbind(t(apply(apply(a4*(-1+exp(c4[, 1:6]%*%z4[ 1:6,])),1,tapply,momoSea
                t(apply(apply(a4*(-1+exp(c4[,7:13]%*%z4[7:13,])),1,tapply,momoSeason(ftmp$date),sum),1,quantile,c(0.5,0.025,0.975))))
 totfree<-cbind(t(apply(apply(b4*(-1+exp(d4[, 1:6]%*%z4[ 1:6,])),1,tapply,momoSeason(ftmp$date),sum),1,quantile,c(0.5,0.025,0.975))),
                t(apply(apply(b4*(-1+exp(d4[,7:13]%*%z4[7:13,])),1,tapply,momoSeason(ftmp$date),sum),1,quantile,c(0.5,0.025,0.975))))
+source("R/tools.R")
 system.time(feff<-momoEffects(ftmp,temp=1:6,infl=7:13)) # 20s
 system.time(peff<-momoEffects(ptmp,temp=1:6,infl=7:13)) # 21
 system.time(meff<-momoEffects(mtmp,temp=1:6,infl=7:13)) # 10s
-system.time(Meff<-momoEffects(Mtmp,temp=1:6,infl=7:13)) # 10s
+system.time(Meff<-momoEffects(Mtmp,temp=8:13,infl=1:7)) # 10s
 
-par(mfcol=c(1,2))
+par(mfrow=c(2,2))
 matplot (2010:2017,t(feff$temptotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=1,ylim=c(-1000,2000))
 matlines(2010:2017,t(peff$temptotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=2)
 matlines(2010:2017,t(meff$temptotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=3)
@@ -197,7 +189,39 @@ matlines(2010:2017,t(peff$infltotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col
 matlines(2010:2017,t(meff$infltotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=3)
 matlines(2010:2017,t(Meff$infltotal[[5]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=4)
 abline(h=0)
+plot(ftmp$standata$y[,5],type="l")
+matlines(t(apply(feff$baseline[,,5],2,quantile,c(0.5,0.025,0.975))),lty=c(1,2,2),lwd=c(4,1,1),col=1)
+matlines(t(apply(peff$baseline[,,5],2,quantile,c(0.5,0.025,0.975))),lty=c(1,2,2),lwd=c(4,1,1),col=2)
+matlines(t(apply(meff$baseline[,,5],2,quantile,c(0.5,0.025,0.975))),lty=c(1,2,2),lwd=c(4,1,1),col=3)
+matlines(t(apply(Meff$baseline[,,5],2,quantile,c(0.5,0.025,0.975))),lty=c(1,2,2),lwd=c(4,1,1),col=4)
+plot(ftmp$standata$y[,5],type="l")
+matlines(t(apply(feff$full    [,,5],2,quantile,c(0.5,0.025,0.975))),lty=c(1,2,2),lwd=c(4,1,1),col=1)
+matlines(t(apply(peff$full    [,,5],2,quantile,c(0.5,0.025,0.975))),lty=c(1,2,2),lwd=c(4,1,1),col=2)
+matlines(t(apply(meff$full    [,,5],2,quantile,c(0.5,0.025,0.975))),lty=c(1,2,2),lwd=c(4,1,1),col=3)
+matlines(t(apply(Meff$full    [,,5],2,quantile,c(0.5,0.025,0.975))),lty=c(1,2,2),lwd=c(4,1,1),col=4)
 
+100*apply(feff$alpha>0,2:3,mean)
+100*apply(peff$alpha>0,2:3,mean)
+100*apply(meff$alpha>0,2:3,mean)
+100*apply(Meff$alpha>0,2:3,mean)
 
-
+qnts<-c(.5,0.025,0.975,.25,.75)
+par(mfcol=c(2,5))
+for(i in 1:5) {
+matplot (t(apply((ftmp$standata$y[,i])-t(feff$full[,,i]),1,function(a) quantile((a-mean(a))/sd(a),qnts))),type="l",lty=c(1,2,2),col=1,main=i)
+matlines(t(apply((ptmp$standata$y[,i])-t(peff$full[,,i]),1,function(a) quantile((a-mean(a))/sd(a),qnts))),type="l",lty=c(1,2,2),col=2)
+matlines(t(apply((mtmp$standata$y[,i])-t(meff$full[,,i]),1,function(a) quantile((a-mean(a))/sd(a),qnts))),type="l",lty=c(1,2,2),col=3)
+matlines(t(apply((Mtmp$standata$y[,i])-t(Meff$full[,,i]),1,function(a) quantile((a-mean(a))/sd(a),qnts))),type="l",lty=c(1,2,2),col=4)
+matplot (t(apply((ftmp$standata$y[,i])-t(feff$baseline[,,i]),1,function(a) quantile((a-mean(a))/sd(a),qnts))),type="l",lty=c(1,2,2),col=1)
+matlines(t(apply((ptmp$standata$y[,i])-t(peff$baseline[,,i]),1,function(a) quantile((a-mean(a))/sd(a),qnts))),type="l",lty=c(1,2,2),col=2)
+matlines(t(apply((mtmp$standata$y[,i])-t(meff$baseline[,,i]),1,function(a) quantile((a-mean(a))/sd(a),qnts))),type="l",lty=c(1,2,2),col=3)
+matlines(t(apply((Mtmp$standata$y[,i])-t(Meff$baseline[,,i]),1,function(a) quantile((a-mean(a))/sd(a),qnts))),type="l",lty=c(1,2,2),col=4)
+}
 meff$temptotal
+str(Mtmp$standata)
+
+par(mfcol=c(1,1))
+plot((apply((ftmp$standata$y[,i])-t(feff$full[,,i]),1,function(a) mean((a-mean(a))/sd(a)>2))))
+plot(apply((ftmp$standata$y[,i])-t(feff$baseline[,,i]),1,function(a) mean(a>0)))
+abline(h=c(0.05,0.95))
+
