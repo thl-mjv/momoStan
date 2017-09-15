@@ -34,7 +34,7 @@ amomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",po
     y   <-with(data,na.0(tapply(get(mortvar),list(get(datevar),get(byvar)),sum)))
     ## create population matrix, replace missing values with zeroes
     pop <-with(data,na.0(tapply(log(get(popvar)),list(get(datevar),get(byvar)),sum)))
-    pop<-(pop-mean(pop))/diff(range(pop))
+    pop<-(pop-mean(pop))/pmax(1,diff(range(pop)))
     ## create indicator vector for inclusions
     OK <-with(data,na.0(tapply(.OK.,get(datevar),max))) # using max means we are inclusive
     ## create date vector based on the names

@@ -63,7 +63,7 @@ flumomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",
     }
     covar<-covar[Zok]
     ## print(str(res))
-    res$standata$z<-Z[,,Zok]
+    res$standata$z<-Z[,,Zok,drop=FALSE]
     res$standata$Q<-sum(Zok)
     res$standata$NT<-res$standata$penalty<-res$standata$NP<-NULL
     ## Run the jewels
