@@ -130,6 +130,10 @@ system.time(peff<-momoEffects(ptmp,temp=1:6,infl=7:12)) # 21
 system.time(meff<-momoEffects(mtmp,temp=1:6,infl=7:12)) # 10s
 system.time(Meff<-momoEffects(Mtmp,temp=8:12,infl=1:7)) # 10s
 
+p1<-plot(peff,type="infleff")
+momoStanFeature(p1,feff,type="infleff",colour="blue")
+
+
 par(mfrow=c(2,2))
 matplot (2011:2016,t(feff$temptotal[[1]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=1,ylim=c(-1000,2000))
 matlines(2011:2016,t(peff$temptotal[[1]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=2)

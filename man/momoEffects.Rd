@@ -4,7 +4,8 @@
 \alias{momoEffects}
 \title{Extract interesting information from a fit}
 \usage{
-momoEffects(obj, temp = "TEMP", infl = "InfA")
+momoEffects(obj, temp = "TEMP", infl = "InfA", quants = c(0.5, 0.025,
+  0.975))
 }
 \arguments{
 \item{obj}{fit object}
@@ -12,9 +13,11 @@ momoEffects(obj, temp = "TEMP", infl = "InfA")
 \item{temp}{either numeric vector or a regular expression to identify temperature effects}
 
 \item{infl}{either numeric vector or a regular expression to identify influenxa effects}
+
+\item{quants}{which quantiles to calculate for the effects}
 }
 \value{
-a list with components
+a list with components ...
 }
 \description{
 Extract interesting information from a fit
