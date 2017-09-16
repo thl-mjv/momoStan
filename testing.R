@@ -133,6 +133,13 @@ system.time(Meff<-momoEffects(Mtmp,temp=8:12,infl=1:7)) # 10s
 p1<-plot(peff,type="infleff")
 momoStanFeature(p1,feff,type="infleff",colour="blue")
 
+p2<-plot(peff,type="tempeff")
+momoStanFeature(p2,feff,type="tempeff",colour="blue")
+
+p3<-plot(peff,type="baseline")
+p3<-momoStanFeature(p3,feff,type="baseline",colour="blue")
+p3<-momoStanFeature(p3,meff,type="baseline",colour="green")
+    momoStanFeature(p3,Meff,type="baseline",colour="cyan")
 
 par(mfrow=c(2,2))
 matplot (2011:2016,t(feff$temptotal[[1]]),type="l",lty=c(1,2,2),lwd=c(4,1,1),col=1,ylim=c(-1000,2000))

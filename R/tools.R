@@ -74,7 +74,7 @@ momoStanPlotData<-function(obj,type="baseline",colour="red",group=1,alpha=.2) {
                               Ymin=get(type)[2,,group],
                               Ymax=get(type)[3,,group]))
   if(type%in%c("tempeff","infleff"))
-    data<-with(obj,data.frame(x=date,y=NA,
+    data<-with(obj,data.frame(x=date,y=0,
                               Y=get(type)[[group]][1,],Ymin=get(type)[[group]][2,],Ymax=get(type)[[group]][3,]))
   return(data)
 }
