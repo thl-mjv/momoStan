@@ -87,7 +87,7 @@ momoStanFeature<-function(plt,obj,type="baseline",colour="red",group=1,alpha=.2)
 }
 #' @describeIn momoStanPlotData plot data from momoStanEffs
 #' @export
-plot.momoStanEffs<-function(obj,type="baseline",colour="red",group=1,alpha=.2) {
+momoStanPlot<-function(obj,type="baseline",colour="red",group=1,alpha=.2) {
   data<-momoStanPlotData(obj,type,group=group)
   ggplot(data,aes(x=x))+geom_line(aes(y=y))+geom_line(aes(y=Y),size=2,colour=colour)+
     geom_ribbon(aes(ymin=Ymin,ymax=Ymax),colour=NA,fill=colour,alpha=alpha)
