@@ -130,13 +130,13 @@ system.time(peff<-momoEffects(ptmp,temp=1:6,infl=7:12)) # 21
 system.time(meff<-momoEffects(mtmp,temp=1:6,infl=7:12)) # 10s
 system.time(Meff<-momoEffects(Mtmp,temp=8:12,infl=1:7)) # 10s
 
-p1<-plot(peff,type="infleff")
+p1<-momoStanPlot(peff,type="infleff")
 momoStanFeature(p1,feff,type="infleff",colour="blue")
 
-p2<-plot(peff,type="tempeff")
+p2<-momoStanPlot(peff,type="tempeff")
 momoStanFeature(p2,feff,type="tempeff",colour="blue")
 
-p3<-plot(peff,type="baseline")
+p3<-momoStanPlot(peff,type="baseline")
 p3<-momoStanFeature(p3,feff,type="baseline",colour="blue")
 p3<-momoStanFeature(p3,meff,type="baseline",colour="green")
     momoStanFeature(p3,Meff,type="baseline",colour="cyan")
