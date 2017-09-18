@@ -7,6 +7,21 @@
 #' @return a list with components ...
 #' @export
 momoEffects<-function(obj,temp="TEMP",infl="InfA",quants=c(0.5,0.025,0.975)) {
+  if(is.null(obj$positives)) { # amomo
+    Z<-NULL
+    fixorder<-with(obj,match(date,ndate))
+    alpha<-extract(obj$fit,"alpha_real")[[1]]
+    baseline<-extract(obj$fit,pars="y_pred")[[1]][,fixorder,,drop=FALSE]
+    print(dim(baseline))
+    M<-dim(baseline)[3]
+    print(M)
+    Y<-matrix(NA,nr=dim(baseline)[2],nc=M)
+    Y[obj$ok,]<-obj$standata$y
+    full<-baseline
+    tempeff<-lapply(1:M,function(m) baseline[,,m]*0)
+    infleff<-lapply(1:M,function(m) baseline[,,m]*0)
+  } else { # flumomo
+    Y<-obj$standata$y
     if(is.null(obj$standata$z)) {
         Qp<-obj$standata$Qp
         Qf<-obj$standata$Qf
@@ -35,6 +50,7 @@ momoEffects<-function(obj,temp="TEMP",infl="InfA",quants=c(0.5,0.025,0.975)) {
     print(infl)
     tempeff<-lapply(1:M,function(m) baseline[,,m]*(exp(alpha[,temp,m]%*%t(Z[,m,temp]))-1))
     infleff<-lapply(1:M,function(m) baseline[,,m]*(exp(alpha[,infl,m]%*%t(Z[,m,infl]))-1))
+  }
     temptotal<-lapply(1:M,function(m) {
         apply(apply(tempeff[[m]],1,tapply,momoSeason(obj$date),sum),1,quantile,quants)
     })
@@ -43,7 +59,7 @@ momoEffects<-function(obj,temp="TEMP",infl="InfA",quants=c(0.5,0.025,0.975)) {
     })
     res<-list(
       date=obj$date,
-      y=obj$standata$y,
+      y=Y,
       Z=Z,
       quants=quants,
       alpha   =apply(alpha   ,2:3,quantile,quants),
@@ -65,16 +81,16 @@ momoEffects<-function(obj,temp="TEMP",infl="InfA",quants=c(0.5,0.025,0.975)) {
 #' @param plt a plot to be added to
 #' @return a data or a ggplot
 #' @export
-momoStanPlotData<-function(obj,type="baseline",colour="red",group=1,alpha=.2) {
+momoStanPlotData<-function(obj,type="baseline",colour="red",group=1,alpha=.2,modelname="") {
   if(!type%in%names(obj)) stop("Unknown type")
   if(type%in%c("baseline","full"))
     data<-with(obj,data.frame(x=date,
-                              y=y[,group],
+                              y=y[,group],group=group,type=type,modelname=modelname,
                               Y=get(type)[1,,group],
                               Ymin=get(type)[2,,group],
                               Ymax=get(type)[3,,group]))
   if(type%in%c("tempeff","infleff"))
-    data<-with(obj,data.frame(x=date,y=0,
+    data<-with(obj,data.frame(x=date,y=0,group=group,type=type,modelname=modelname,
                               Y=get(type)[[group]][1,],Ymin=get(type)[[group]][2,],Ymax=get(type)[[group]][3,]))
   return(data)
 }
