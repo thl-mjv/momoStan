@@ -72,7 +72,7 @@ flumomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",
         positive<-match.arg(positive)
         if(positive=="some") {
             cat("Positives=some:")
-            model<-stanmodels$flumomominus
+            model<-stanmodels$flumomomixed
             npos<-0
             if(length(positives)>0) {
                 posZ<-apply(sapply(positives,function(a) grepl(a,covar)),1,any)
@@ -102,12 +102,12 @@ flumomoStan<-function(data,spring=16:25,autumn=31:47,datevar="date",mortvar="n",
             }
         }
         if(positive=="all" ) {
-            model<-stanmodels$flumomo
+            model<-stanmodels$flumomopositive
             positives<-covar
             freepars<-NULL
         }
         if(positive=="none") {
-            model<-stanmodels$flumomoplus
+            model<-stanmodels$flumomofree
             positives<-NULL
             freepars<-covar
         }
