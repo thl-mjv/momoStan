@@ -51,45 +51,12 @@ matlines(tmp$date,foo[,,5])
 
 apply(apply(extract(tmp$fit,pars="shrinkage")[[1]],1,function(a) a[1:2]/sum(a)),1,quantile,c(0.5,0.025,0.975))
 
+### Fix the data for further analyses
+smalldata<-fixMomoData()
+summary(smalldata)
 
-tmp.pred<-predict(lm(TEMP~momoSin(date,3),data=fimomodata))
-fimomodata$TEMP.pred<-tmp.pred
-fimomodata$TEMP.hotter<-with(fimomodata,pmax(TEMP,TEMP.pred)-TEMP.pred) # above prediction
-fimomodata$TEMP.hot   <-with(fimomodata,pmax(TEMP,max(TEMP.pred))-max(TEMP.pred)) # above hot
-fimomodata$TEMP.hot2  <-with(fimomodata,ifelse(TEMP>max(TEMP.pred),max(TEMP.pred)-pmax(TEMP.pred,mean(TEMP.pred)),
-                                        ifelse(TEMP<mean(TEMP.pred),0,ifelse(TEMP>TEMP.pred,TEMP-pmax(mean(TEMP.pred),TEMP.pred),0))))
-fimomodata$TEMP.hot3  <-with(fimomodata,ifelse(TEMP>mean(TEMP.pred),mean(TEMP.pred)-pmin(TEMP.pred,mean(TEMP.pred)),
-                                        ifelse(TEMP>TEMP.pred,TEMP-TEMP.pred,0)))
-fimomodata$TEMP.hots  <-with(fimomodata,TEMP.hot+TEMP.hot2+TEMP.hot3)
-fimomodata$TEMP.colder<-with(fimomodata,-pmin(TEMP,TEMP.pred)+TEMP.pred)
-fimomodata$TEMP.cold  <-with(fimomodata,min(TEMP.pred)-pmin(TEMP,min(TEMP.pred)))
-fimomodata$TEMP.cold2 <-with(fimomodata,ifelse(TEMP<min(TEMP.pred),-min(TEMP.pred)+pmin(TEMP.pred,mean(TEMP.pred)),
-                                        ifelse(TEMP>mean(TEMP.pred),0,ifelse(TEMP<TEMP.pred,pmin(mean(TEMP.pred),TEMP.pred)-TEMP,0))))
-fimomodata$TEMP.cold3 <-with(fimomodata,ifelse(TEMP<mean(TEMP.pred),-mean(TEMP.pred)+pmax(TEMP.pred,mean(TEMP.pred)),
-                                        ifelse(TEMP<TEMP.pred,TEMP.pred-TEMP,0)))
-fimomodata$TEMP.colds <-with(fimomodata,TEMP.cold+TEMP.cold2+TEMP.cold3)
 
-dim(smallmomodata<-subset(fimomodata,age=="All" & momoSeason(date)%in%2011:2016))
-with(smallmomodata,table(momoSeason(date)))
-
-par(mfcol=c(2,2))
-for(i in 0:1) {
-    with(subset(fimomodata,age=="All"),matplot(date,cbind(TEMP,TEMP.pred,mean(TEMP.pred),max(TEMP.pred),
-                                                          TEMP.hot+i*max(TEMP.pred),
-                                                          TEMP.hot2+i*pmax(TEMP.pred,mean(TEMP.pred)),
-                                                          TEMP.hot3+i*TEMP.pred),type="l",
-                                               lty=c(1,1,3,3,1,1,1),col=c(1,2,1,1,1,2,3),lwd=c(2,2,1,1,4,4,4)))
-    with(subset(fimomodata,age=="All"),matplot(date,cbind(TEMP,TEMP.pred,mean(TEMP.pred),max(TEMP.pred),
-                                                          -TEMP.cold+i*min(TEMP.pred),
-                                                          -TEMP.cold2+i*pmin(TEMP.pred,mean(TEMP.pred)),
-                                                          -TEMP.cold3+i*TEMP.pred),type="l",
-                                               lty=c(1,1,3,3,1,1,1),col=c(1,2,1,1,1,2,3),lwd=c(2,2,1,1,4,4,4)))
-}
-
-with(subset(fimomodata,age=="All" & abs(TEMP.hots-TEMP.hotter)>0),cbind(TEMP,TEMP.pred,mean(tmp.pred),max(tmp.pred),TEMP.hotter,TEMP.hot,TEMP.hot2,TEMP.hot3,TEMP.hotter-TEMP.hots))
-summary(smallmomodata)
-5.5979-c(3.7940, 4.668 )
-
+### Larger model
 source("R/stanmodels.R")
 source("R/utils.R")
 source("R/amomoStan.R")
@@ -99,13 +66,13 @@ options(mc.cores = parallel::detectCores())
 
 atmp<-amomoStan(smallmomodata,byvar="age",popvar="pop",penalties=c(0,0,1))
 
-ptmp<-flumomoStan(smallmomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
+ptmp<-flumomoStan(smalldata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
                   seasvar="InfA",data.only=FALSE,positive="all" ,iter=1000) # 560s
-ftmp<-flumomoStan(smallmomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
+ftmp<-flumomoStan(smalldata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
                   seasvar="InfA",data.only=FALSE,positive="none",iter=1000) #351s 615
-mtmp<-flumomoStan(smallmomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
+mtmp<-flumomoStan(smalldata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
                   seasvar="InfA",data.only=FALSE,positive="some",iter=1000,positives="InfA") # 1193
-Mtmp<-flumomoStan(smallmomodata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
+Mtmp<-flumomoStan(smalldata,byvar="age",popvar="pop",covar=c("TEMP.hot","TEMP.hot2","TEMP.hot3","TEMP.cold","TEMP.cold3","TEMP.cold3"),
                   seasvar="InfA",data.only=FALSE,positive="some",iter=1000,positives="TEMP") # 1047
 system.time(save(tmp,ptmp,ftmp,mtmp,Mtmp,file="tmp.rda")) #464s
 
